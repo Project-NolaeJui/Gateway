@@ -11,6 +11,9 @@ import org.springframework.core.env.Environment
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.http.server.reactive.ServerHttpRequest
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.User
 import org.springframework.stereotype.Component
 import java.util.*
 import javax.crypto.SecretKey
@@ -44,7 +47,7 @@ class AuthorizationHeaderFilter(@Value("\${jwt.secret}") secretKey: String,
         }
     }
 
-    private fun isJwtValid(token: String?): Boolean {
+    fun isJwtValid(token: String?): Boolean {
         return try {
             val claims: Claims = Jwts.parser()
                 .verifyWith(this.key)
@@ -62,9 +65,24 @@ class AuthorizationHeaderFilter(@Value("\${jwt.secret}") secretKey: String,
         }
     }
 
-    private fun extractToken(request: ServerHttpRequest): String? {
+    fun getAuthentication(token: String): UsernamePasswordAuthenticationToken {
+        val claims = Jwts.parser()
+            .verifyWith(this.key)
+            .build()
+            .parseSignedClaims(token)
+            .payload ?: throw RuntimeException("권한 정보 없음")
+
+        val authorities = claims["Bearer "]
+            .toString()
+            .split(",")
+            .map { SimpleGrantedAuthority(it) }
+
+        val principal = User(claims.subject, "", authorities)
+        return UsernamePasswordAuthenticationToken(principal, "", authorities)
+    }
+
+    fun extractToken(request: ServerHttpRequest): String? {
         val authHeader = request.headers.getFirst("Authorization") ?: return null
         return if (authHeader.startsWith("Bearer ")) authHeader.substring(7) else null
     }
-
 }
