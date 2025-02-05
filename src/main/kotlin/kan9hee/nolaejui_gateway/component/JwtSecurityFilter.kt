@@ -14,11 +14,12 @@ class JwtSecurityFilter(private val authorizationHeaderFilter: AuthorizationHead
         val request = exchange.request
         val token = authorizationHeaderFilter.extractToken(request)
 
-        if (token != null && authorizationHeaderFilter.isJwtValid(token)) {
+        return if (token != null && authorizationHeaderFilter.isJwtValid(token)) {
             val authentication = authorizationHeaderFilter.getAuthentication(token)
-            ReactiveSecurityContextHolder.withAuthentication(authentication)
+            chain.filter(exchange)
+                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication))
+        } else {
+            chain.filter(exchange)
         }
-
-        return chain.filter(exchange)
     }
 }

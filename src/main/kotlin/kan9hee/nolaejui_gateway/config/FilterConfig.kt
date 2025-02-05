@@ -20,10 +20,10 @@ class FilterConfig(private val headerFilter: AuthorizationHeaderFilter) {
             .csrf { it.disable() }
             .authorizeExchange { authorize ->
                 authorize
-                    .pathMatchers("/auth/**").permitAll()
+                    .pathMatchers("/auth/signUp", "/auth/logIn", "/auth/logInByToken").permitAll()
                     .anyExchange().authenticated()
             }
-            .addFilterAt(JwtSecurityFilter(headerFilter), SecurityWebFiltersOrder.AUTHENTICATION)
+            .addFilterAt(JwtSecurityFilter(headerFilter), SecurityWebFiltersOrder.AUTHORIZATION)
             .build()
     }
 }
