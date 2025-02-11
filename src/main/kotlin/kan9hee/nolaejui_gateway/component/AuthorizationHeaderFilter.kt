@@ -72,7 +72,7 @@ class AuthorizationHeaderFilter(@Value("\${jwt.secret}") secretKey: String,
             .parseSignedClaims(token)
             .payload ?: throw RuntimeException("권한 정보 없음")
 
-        val authorities = claims["Bearer "]
+        val authorities = claims["auth"]
             .toString()
             .split(",")
             .map { SimpleGrantedAuthority(it) }

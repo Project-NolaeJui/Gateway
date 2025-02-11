@@ -20,7 +20,8 @@ class FilterConfig(private val headerFilter: AuthorizationHeaderFilter) {
             .csrf { it.disable() }
             .authorizeExchange { authorize ->
                 authorize
-                    .pathMatchers("/auth/signUp", "/auth/logIn", "/auth/logInByToken").permitAll()
+                    .pathMatchers("/auth/signUp", "/auth/logIn", "/auth/reissueAccessToken").permitAll()
+                    .pathMatchers("/management/**").hasAuthority("ROLE_ADMIN")
                     .anyExchange().authenticated()
             }
             .addFilterAt(JwtSecurityFilter(headerFilter), SecurityWebFiltersOrder.AUTHORIZATION)
