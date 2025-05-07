@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import kan9hee.nolaejui_gateway.enums.AuthConstants
+import kan9hee.nolaejui_gateway.enums.JwtAdminPath
 import kan9hee.nolaejui_gateway.enums.JwtWhitelistPath
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cloud.gateway.filter.GatewayFilter
@@ -46,11 +47,14 @@ class AuthorizationHeaderFilter(
                 return@GatewayFilter exchange.response.setComplete()
             }
 
+            val authorities = claims["auth"] as String
+            if(JwtAdminPath.allPaths().any{ path ==it } && !authorities.split(",").contains("ROLE_ADMIN")){
+                exchange.response.statusCode = HttpStatus.FORBIDDEN
+                return@GatewayFilter exchange.response.setComplete()
+            }
+
             val mutatedRequest = exchange.request.mutate()
-                .header(
-                    AuthConstants.USER_ID_HEADER.value,
-                    claims.subject
-                )
+                .headers { it.set(AuthConstants.USER_ID_HEADER.value, claims.subject) }
                 .build()
             chain.filter(exchange.mutate().request(mutatedRequest).build())
         }
